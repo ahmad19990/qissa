@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QISSA — عرض تجريبي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=El+Messiri:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0E0B0D; --surface:#171114; --crimson:#7A1F2B; --crimson-bright:#B23A45;
+    --gold:#C9A227; --ink:#EDE6DE; --muted:#A99C93;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Cairo',sans-serif;min-height:100vh}
+  h1,h2,.brand{font-family:'El Messiri',serif}
+  header{position:sticky;top:0;background:rgba(14,11,13,.9);backdrop-filter:blur(6px);
+    border-bottom:1px solid rgba(255,255,255,.06);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;z-index:10}
+  .brand{font-size:20px;font-weight:700;cursor:pointer}
+  .navlink{color:var(--muted);font-size:14px;cursor:pointer}
+  main{max-width:960px;margin:0 auto;padding-bottom:60px}
+  .hero{position:relative;aspect-ratio:3/4;max-height:420px;overflow:hidden}
+  .hero img{width:100%;height:100%;object-fit:cover}
+  .hero-fade{position:absolute;inset:0;background:linear-gradient(to top,var(--bg),rgba(14,11,13,.3),transparent)}
+  .hero-text{position:absolute;bottom:0;right:0;padding:20px;max-width:420px}
+  .eyebrow{color:var(--gold);font-size:12px}
+  .btn{display:inline-block;background:var(--crimson);color:var(--ink);border:none;
+    padding:10px 22px;border-radius:10px;font-size:14px;cursor:pointer;font-family:'Cairo',sans-serif;transition:.2s}
+  .btn:hover{background:var(--crimson-bright)}
+  section{margin-top:36px;padding:0 18px}
+  .row{display:flex;gap:14px;overflow-x:auto;padding-bottom:6px}
+  .card{flex:0 0 auto;width:150px;cursor:pointer}
+  .card img{width:150px;height:225px;object-fit:cover;border-radius:10px;background:var(--surface)}
+  .card p.t{font-size:14px;margin:8px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card p.m{font-size:12px;color:var(--muted);margin:0}
+  .cats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .cat{background:var(--surface);border:1px solid rgba(255,255,255,.06);border-radius:10px;
+    text-align:center;padding:14px;font-size:14px;color:var(--muted)}
+
+  /* watch page */
+  .watch{display:none;max-width:640px;margin:0 auto;padding:20px 18px}
+  .watch.active{display:block}
+  main.home.hidden, .admin.hidden{display:none}
+  .player{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden}
+  .player video{width:100%;height:100%}
+  .gate,.adplay{position:absolute;inset:0;background:rgba(14,11,13,.97);display:none;
+    flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+  .gate.show,.adplay.show{display:flex}
+  .wtitle{font-size:20px;margin:16px 0 4px}
+  .wmeta{color:var(--muted);font-size:12px}
+  .wdesc{color:var(--muted);font-size:14px;line-height:1.7;margin-top:14px}
+  .back{color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:14px;display:inline-block}
+  .share{border:1px solid rgba(255,255,255,.12);color:var(--muted);background:none;
+    border-radius:10px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Cairo',sans-serif}
+
+  /* admin */
+  .admin{max-width:520px;margin:0 auto;padding:24px 18px}
+  .admin-row{display:flex;align-items:center;gap:10px;background:var(--surface);
+    border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:10px;margin-bottom:8px}
+  .admin-row img{width:44px;height:60px;object-fit:cover;border-radius:6px}
+  .admin-row .info{flex:1;min-width:0}
+  .admin-row .info p{margin:0;font-size:13px}
+  .admin-row .info span{font-size:11px;color:var(--muted)}
+  .mini{font-size:11px;border:1px solid rgba(255,255,255,.1);color:var(--muted);
+    background:none;border-radius:8px;padding:5px 10px;cursor:pointer;font-family:'Cairo',sans-serif}
+  label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}
+  input,select,textarea{width:100%;background:var(--surface);border:1px solid rgba(255,255,255,.08);
+    border-radius:10px;padding:10px 12px;font-size:14px;color:var(--ink);font-family:'Cairo',sans-serif}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:24px;border-top:1px solid rgba(255,255,255,.06)}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="brand" onclick="showHome()">QISSA</span>
+  <span class="navlink" onclick="showAdmin()">لوحة التحكم</span>
+</header>
+
+<main class="home" id="home"></main>
+
+<div class="watch" id="watchPage"></div>
+
+<div class="admin hidden" id="adminPage"></div>
+
+<footer>عرض تجريبي محلي — يعمل بالكامل داخل هذا الملف، بدون إنترنت أو خادم</footer>
+
+<script>
+let films = [
+  {id:1, title:"الضيف الأخير", desc:"امرأة تسكن وحدها تسمع طرقًا على بابها كل ليلة الساعة 3 فجرًا. الليلة قررت أن تفتح الباب.",
+   cat:"رعب", poster:"https://images.unsplash.com/photo-1509281373149-e957c6296406?w=600",
+   video:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+   duration:5, freeDuration:6, views:15420, featured:true, hidden:false},
+  {id:2, title:"الملف رقم 7", desc:"محقق يكتشف أن الملف الذي يحقق فيه يحمل اسمه هو.",
+   cat:"جريمة", poster:"https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=600",
+   video:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+   duration:4, freeDuration:6, views:9830, featured:false, hidden:false},
+  {id:3, title:"الإشارة 9", desc:"طاقم محطة فضائية يستقبل إشارة تحمل صوتهم هم، لكن بعد عشر سنوات من الآن.",
+   cat:"خيال علمي", poster:"https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=600",
+   video:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+   duration:6, freeDuration:6, views:21030, featured:false, hidden:false},
+];
+let nextId = 4;
+
+function fmtViews(v){ return v>=1000 ? (v/1000).toFixed(1)+" ألف مشاهدة" : v+" مشاهدة"; }
+
+function cardHtml(f){
+  return `<div class="card" onclick="openFilm(${f.id})">
+    <img src="${f.poster}">
+    <p class="t">${f.title}</p>
+    <p class="m">${f.cat} · ${fmtViews(f.views)}</p>
+  </div>`;
+}
+
+function renderHome(){
+  const visible = films.filter(f=>!f.hidden);
+  const featured = visible.find(f=>f.featured) || visible[0];
+  const mostWatched = [...visible].sort((a,b)=>b.views-a.views);
+  const thrilling = visible.filter(f=>["رعب","غموض","جريمة"].includes(f.cat));
+  const cats = ["رعب","غموض","جريمة","خيال علمي","كوميديا","رومانسية"];
+
+  document.getElementById('home').innerHTML = `
+    ${featured?`
+    <div class="hero">
+      <img src="${featured.poster}">
+      <div class="hero-fade"></div>
+      <div class="hero-text">
+        <div class="eyebrow">قصة هذا الأسبوع</div>
+        <h1 style="margin:6px 0;font-size:26px">${featured.title}</h1>
+        <p style="color:var(--muted);font-size:14px">${featured.desc}</p>
+        <button class="btn" onclick="openFilm(${featured.id})">شاهد الآن</button>
+      </div>
+    </div>`:""}
+
+    <section><h2>الأكثر مشاهدة</h2><div class="row">${mostWatched.map(cardHtml).join('')}</div></section>
+    <section><h2>الأفلام الجديدة</h2><div class="row">${[...visible].reverse().map(cardHtml).join('')}</div></section>
+    ${thrilling.length?`<section><h2>الأكثر إثارة</h2><div class="row">${thrilling.map(cardHtml).join('')}</div></section>`:""}
+    <section><h2>التصنيفات</h2><div class="cats">${cats.map(c=>`<div class="cat">${c}</div>`).join('')}</div></section>
+  `;
+}
+
+function openFilm(id){
+  const f = films.find(x=>x.id===id);
+  f.views++;
+  document.getElementById('watchPage').innerHTML = `
+    <span class="back" onclick="showHome()">‹ رجوع</span>
+    <div class="player">
+      <video id="vid" src="${f.video}" controls autoplay></video>
+      <div class="gate" id="gate">
+        <p style="font-size:18px" class="wtitle">وصلنا للحظة المهمة 👀</p>
+        <p style="color:var(--muted);font-size:14px;max-width:260px">شاهد إعلانًا قصيرًا واحدًا حتى تكمل الفيلم</p>
+        <button class="btn" style="margin-top:16px" onclick="watchAd()">شاهد الإعلان وكمل</button>
+      </div>
+      <div class="adplay" id="adplay">
+        <span style="color:var(--gold);font-size:12px">إعلان</span>
+        <p style="color:var(--muted);font-size:14px;margin-top:8px">يكمل الفيلم بعد انتهاء الإعلان...</p>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:16px">
+      <div>
+        <h1 class="wtitle">${f.title}</h1>
+        <p class="wmeta">${f.cat} · ${f.duration} دقائق · ${fmtViews(f.views)}</p>
+      </div>
+      <button class="share" onclick="shareFilm('${f.title}')">مشاركة</button>
+    </div>
+    <p class="wdesc">${f.desc}</p>
+  `;
+  document.getElementById('home').classList.add('hidden');
+  document.getElementById('adminPage').classList.add('hidden');
+  document.getElementById('watchPage').classList.add('active');
+
+  const vid = document.getElementById('vid');
+  vid.ontimeupdate = () => {
+    if(vid.currentTime >= f.freeDuration){
+      vid.pause();
+      document.getElementById('gate').classList.add('show');
+    }
+  };
+}
+
+function watchAd(){
+  document.getElementById('gate').classList.remove('show');
+  document.getElementById('adplay').classList.add('show');
+  setTimeout(()=>{
+    document.getElementById('adplay').classList.remove('show');
+    const vid = document.getElementById('vid');
+    vid.currentTime = 0;
+    vid.ontimeupdate = null;
+    vid.play();
+  }, 4000);
+}
+
+function shareFilm(title){
+  if(navigator.share){ navigator.share({title, url: location.href}); }
+  else { alert('رابط الفيلم: ' + location.href); }
+}
+
+function showHome(){
+  document.getElementById('watchPage').classList.remove('active');
+  document.getElementById('adminPage').classList.add('hidden');
+  document.getElementById('home').classList.remove('hidden');
+  renderHome();
+}
+
+function renderAdmin(){
+  document.getElementById('adminPage').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h1 style="margin:0;font-size:20px">إدارة الأفلام</h1>
+      <button class="btn" onclick="showAddForm()">+ إضافة فيلم</button>
+    </div>
+    <div id="filmList"></div>
+    <div id="addForm"></div>
+  `;
+  document.getElementById('filmList').innerHTML = films.map(f=>`
+    <div class="admin-row">
+      <img src="${f.poster}">
+      <div class="info"><p>${f.title}</p><span>${f.cat} · ${fmtViews(f.views)}${f.hidden?' · مخفي':''}</span></div>
+      <button class="mini" onclick="toggleHide(${f.id})">${f.hidden?'إظهار':'إخفاء'}</button>
+      <button class="mini" onclick="removeFilm(${f.id})">حذف</button>
+    </div>
+  `).join('');
+}
+
+function toggleHide(id){ const f=films.find(x=>x.id===id); f.hidden=!f.hidden; renderAdmin(); }
+function removeFilm(id){ if(confirm('حذف الفيلم؟')){ films=films.filter(x=>x.id!==id); renderAdmin(); } }
+
+function showAddForm(){
+  document.getElementById('addForm').innerHTML = `
+    <div style="margin-top:20px;border-top:1px solid rgba(255,255,255,.06);padding-top:16px">
+      <label>اسم الفيلم</label><input id="f_title">
+      <label>الوصف</label><textarea id="f_desc" rows="3"></textarea>
+      <label>التصنيف</label>
+      <select id="f_cat">
+        <option>رعب</option><option>غموض</option><option>جريمة</option>
+        <option>خيال علمي</option><option>كوميديا</option><option>رومانسية</option>
+      </select>
+      <label>رابط الصورة (Poster)</label><input id="f_poster" placeholder="https://...">
+      <label>مدة الفيلم (دقائق)</label><input id="f_dur" type="number" value="5">
+      <button class="btn" style="width:100%;margin-top:16px" onclick="publishFilm()">نشر الفيلم</button>
+    </div>
+  `;
+}
+
+function publishFilm(){
+  const title = document.getElementById('f_title').value.trim();
+  const poster = document.getElementById('f_poster').value.trim() || "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600";
+  if(!title){ alert('اكتب اسم الفيلم أولًا'); return; }
+  films.push({
+    id: nextId++, title,
+    desc: document.getElementById('f_desc').value,
+    cat: document.getElementById('f_cat').value,
+    poster,
+    video:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    duration: Number(document.getElementById('f_dur').value)||5,
+    freeDuration: 6, views:0, featured:false, hidden:false
+  });
+  renderAdmin();
+}
+
+function showAdmin(){
+  document.getElementById('watchPage').classList.remove('active');
+  document.getElementById('home').classList.add('hidden');
+  document.getElementById('adminPage').classList.remove('hidden');
+  renderAdmin();
+}
+
+renderHome();
+</script>
+</body>
+</html>
